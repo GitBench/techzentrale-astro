@@ -1,0 +1,25 @@
+---
+import Base from "../layouts/Base.astro";
+import { getCollection } from "astro:content";
+const posts = await getCollection('posts');
+const sorted = posts.sort((a,b)=> (a.data.date < b.data.date ? 1 : -1));
+---
+<Base title="Blog" description="Moderne Tech‑Insights, kompakt erklärt.">
+  <section style="padding:24px 0">
+    <span class="tag">AI</span><span class="tag">DevOps</span><span class="tag">Hardware</span>
+    <h1 style="margin:.4rem 0">Neueste Artikel</h1>
+    <div class="grid" style="margin-top:12px">
+      {sorted.map(({ data, slug }) => (
+        <a class="card" href={`/posts/${slug}/`}>
+          {data.cover && (<div class="cover"><img src={data.cover} alt={data.title} loading="lazy" /></div>)}
+          <div class="p">
+            <div class="meta">{new Date(data.date).toLocaleDateString('de-DE', {year:'numeric', month:'short', day:'2-digit'})} · {data.readingTime ?? 6} Min</div>
+            <div class="title">{data.title}</div>
+            <div class="muted">{data.description}</div>
+            <div style="margin-top:6px">{data.tags?.slice(0,3).map(t => <span class="tag">#{t}</span>)}</div>
+          </div>
+        </a>
+      ))}
+    </div>
+  </section>
+</Base>

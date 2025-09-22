@@ -1,0 +1,26 @@
+---
+const { name, avatar, bio, link } = Astro.props;
+---
+
+<div style="
+  border:1px solid #e2e8f0;
+  border-radius:12px;
+  padding:16px;
+  margin-top:2rem;
+  background:#f9fafb;
+  color:#111;
+  display:flex;
+  align-items:center;
+  gap:1rem;
+">
+  <img src={avatar} alt={name} width="64" height="64" style="border-radius:50%;object-fit:cover;" />
+  <div>
+    <h4 style="margin:0;font-size:1rem;font-weight:700;">{name}</h4>
+    <p style="margin:.3rem 0;color:#555;font-size:.9rem;">{bio}</p>
+    {link && (
+      <a href={link} target="_blank" rel="noopener" style="font-size:.85rem;color:#2563eb;">
+        Mehr über {name}
+      </a>
+    )}
+  </div>
+</div>

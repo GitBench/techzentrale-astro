@@ -1,0 +1,64 @@
+---
+/**
+ * AmazonBox.astro
+ * Affiliate-Box mit Titel, Preis, Sterne (default 4,5/5) und „Empfehlung“-Badge.
+ *
+ * Props:
+ *  - title: string         (Pflicht)
+ *  - asin: string          (Pflicht)
+ *  - price?: string        (optional, z. B. "€ 299,00")
+ *  - rating?: number       (optional, default 4.5)
+ *  - max?: number          (optional, default 5)
+ *
+ * Hinweis: Links enthalten deine Partner-ID: Smartrichter-21
+ */
+const { title, asin, price, rating = 4.5, max = 5 } = Astro.props;
+const link = `https://www.amazon.de/dp/${asin}?tag=Smartrichter-21`;
+
+function starsStr(r = 4.5, m = 5) {
+  const full = Math.floor(r);
+  const half = r % 1 >= 0.5 ? 1 : 0;
+  const empty = Math.max(0, m - full - half);
+  return "★".repeat(full) + (half ? "☆" : "") + "☆".repeat(empty);
+}
+---
+
+<div class="amazon-box" role="complementary" aria-label="Affiliate-Empfehlung">
+  <div class="head">
+    <span class="badge">Empfehlung</span>
+    <a href={link} target="_blank" rel="nofollow sponsored noopener" class="title">{title}</a>
+  </div>
+
+  <div class="meta">
+    <span class="stars" aria-label={`Bewertung ${rating} von ${max}`}>
+      {starsStr(rating, max)} <b>{String(rating).replace('.', ',')}/{max}</b>
+    </span>
+    {price && <span class="price">Preis: <b>{price}</b></span>}
+  </div>
+
+  <a href={link} target="_blank" rel="nofollow sponsored noopener" class="cta">👉 Jetzt bei Amazon ansehen</a>
+  <div class="note">Hinweis: Affiliate-Link. Für dich entstehen keine Mehrkosten.</div>
+</div>
+
+<style>
+  .amazon-box {
+    margin: 1.2rem 0; padding: 1rem 1.2rem;
+    border: 1px solid var(--border, #e2e8f0);
+    border-radius: 12px; background: var(--panel, #fff);
+    box-shadow: var(--shadow, 0 6px 18px rgba(0,0,0,.06));
+  }
+  .head { display: flex; gap: .6rem; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+  .badge { display: inline-flex; align-items: center; gap: .4rem;
+    background: linear-gradient(135deg, var(--primary, #3b5bff), var(--accent, #2ee6a6));
+    color: #111; font-weight: 700; padding: .25rem .6rem; border-radius: 999px; font-size: .8rem;
+  }
+  .title { font-weight: 700; text-decoration: none; color: var(--primary, #3b5bff); }
+  .meta { display: flex; gap: 1rem; align-items: center; margin:.5rem 0; color: var(--muted, #667085); }
+  .stars { font-size: 1rem; letter-spacing: .1rem; }
+  .price b { color: var(--text, #111); }
+  .cta { display: inline-flex; margin-top:.4rem; padding: .6rem .8rem; border: 1px solid var(--border, #e2e8f0);
+    border-radius: 10px; background: var(--panel2, #f6f7fb); text-decoration: none; color: var(--primary, #3b5bff); font-weight: 600;
+  }
+  .cta:hover { filter: brightness(0.98); }
+  .note { margin-top:.4rem; color: var(--muted, #667085); font-size:.9rem; }
+</style>

@@ -1,0 +1,51 @@
+---
+import Base from "../layouts/Base.astro";
+---
+
+<Base title="Newsletter" description="Abonniere den TechZentrale‑Newsletter mit Double‑Opt‑In.">
+  <section style="padding:24px 0" class="prose">
+    <h1>Newsletter abonnieren</h1>
+    <p>
+      Erhalte regelmäßig Updates zu neuen Artikeln, Tests und Trends. Wir nutzen das
+      Newsletter‑System <strong>CleverReach</strong> (mit <em>Double‑Opt‑In</em>).
+    </p>
+
+    <h2>Deine Anmeldung</h2>
+    <p>
+      Nach der Eintragung senden wir dir eine E‑Mail mit einem Bestätigungslink. Erst nach Klick
+      bist du endgültig angemeldet. Du kannst dich jederzeit mit einem Klick wieder abmelden.
+    </p>
+
+    <div class="nl-box">
+      <!-- CLEVERREACH_FORM_SNIPPET_HERE -->
+      <!-- Beispiel: Den JS/HTML-Snippet aus CleverReach hier einfügen (Formulare → Einbetten) -->
+      <!-- Der Snippet sorgt für DOI, Protokollierung und sichere Übertragung -->
+    </div>
+
+    <p class="muted" style="margin-top:.6rem">
+      Mit der Anmeldung erklärst du dich mit dem Empfang unseres Newsletters einverstanden.
+      Hinweise zu Inhalte, Protokollierung der Anmeldung, Auswertung und Widerruf findest du
+      in unserer <a href="/datenschutz/">Datenschutzerklärung</a>.
+    </p>
+
+    <h2>Transparenz & Hinweise</h2>
+    <ul>
+      <li>Versand über CleverReach (Server in der EU). DOI‑Prozess aktiv.</li>
+      <li>Daten: E‑Mail (Pflicht), ggf. Name (optional – je nach Formular).</li>
+      <li>Abmeldung jederzeit möglich. Jeder Newsletter enthält einen Abmeldelink.</li>
+      <li>Wir verwenden in Artikeln Affiliate‑Links (z. B. Amazon). Für dich ändert sich der Preis nicht.</li>
+    </ul>
+  </section>
+
+  <style>
+    .nl-box {
+      border: 1px solid var(--border, #e2e8f0);
+      background: var(--panel, #fff);
+      border-radius: 12px;
+      padding: 1rem;
+      box-shadow: var(--shadow, 0 6px 18px rgba(0,0,0,.06));
+    }
+    .prose a { color: var(--primary, #3b5bff); }
+    .muted { color: var(--muted, #667085); font-size: .95rem; }
+  </style>
+</Base>

@@ -1,0 +1,84 @@
+---
+title: "Rust für Backend-APIs: Axum + SQLX Starterkit"
+description: "Ein performantes Template mit Migrations, Tests und CI – produktionsreif von Tag 1."
+date: 2025-09-18
+tags: ["Rust", "Backend", "APIs", "Postgres"]
+cover: "/images/rust-backend.jpg"
+readingTime: 16
+sources:
+  - name: "Axum Guide"
+    url: "https://docs.rs/axum/latest/axum/"
+  - name: "SQLx"
+    url: "https://github.com/launchbadge/sqlx"
+  - name: "Tokio"
+    url: "https://tokio.rs/"
+---
+import AmazonBox from "@/components/AmazonBox.astro";
+
+## Warum Rust für Web-APIs?
+Rust kombiniert **Zero‑Cost Abstractions** mit **Memory‑Safety** ohne GC. In der Praxis heißt das: **niedrige Latenzen**, konstante Performance, und weniger „Heisenbugs“. Gegenüber Go/Node spart Rust oft CPU/RAM bei hoher Last.
+
+<AmazonBox title="Rust in Action (Buch, praxisnah)" asin="1617294551" price="€ 44,90" rating={4.5} />
+
+## Architektur-Überblick
+- **Axum** als HTTP‑Framework (Tokio‑basiert)  
+- **SQLx** für asynchrone DB‑Zugriffe *mit Compile‑Time Checks*  
+- **Tower** Middleware (Rate‑Limit, Auth)  
+- **Tracing** + OpenTelemetry für Observability
+
+## Projekt-Blueprint
+```bash
+cargo new api-starter --bin
+cd api-starter
+cargo add axum tokio --features macros,rt-multi-thread
+cargo add sqlx --features postgres,runtime-tokio-native-tls
+cargo add serde serde_json thiserror anyhow tracing tracing-subscriber
+```
+
+### Minimaler Server
+```rust
+use axum::{routing::get, Router};
+use std::net::SocketAddr;
+
+#[tokio::main]
+async fn main() {
+    tracing_subscriber::fmt::init();
+    let app = Router::new().route("/health", get(|| async { "ok" }));
+    let addr = SocketAddr::from(([0,0,0,0], 3000));
+    axum::Server::bind(&addr).serve(app.into_make_service()).await.unwrap();
+}
+```
+
+### DB & Migrations
+```bash
+cargo install sqlx-cli
+export DATABASE_URL=postgres://user:pass@localhost/db
+sqlx migrate add create_users
+# ... schreibe SQL
+sqlx migrate run
+```
+
+### Query mit Compile-Time Check
+```rust
+use sqlx::PgPool;
+use serde::Serialize;
+
+#[derive(Serialize)]
+struct User { id: i64, email: String }
+
+async fn list_users(db: PgPool) -> Result<Vec<User>, sqlx::Error> {
+  sqlx::query_as!(User, "SELECT id, email FROM users ORDER BY id DESC")
+      .fetch_all(&db).await
+}
+```
+
+## Tests & CI
+- **Integrationstests** mit `reqwest`.  
+- **`cargo sqlx prepare`** in CI verhindert Query‑Drift.  
+- **Container‑Release** mit Distroless Images.
+
+Zum schnellen lokalen DB‑Start:
+<AmazonBox title="Raspberry Pi 5 als Test-DB-Server (Postgres leichtgewichtig)" asin="B0CHYH9GMB" />
+
+## Fazit
+Mit Axum + SQLx bekommst du einen **robusten, schnellen** API‑Stack. Die Lernkurve zahlt sich aus – besonders bei Services, die *lange* stabil laufen sollen.

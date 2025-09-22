@@ -1,0 +1,62 @@
+[
+  {
+    "title": "Meta Quest 3",
+    "outfile": "meta-quest-3.jpg",
+    "download_url": "https://commons.wikimedia.org/wiki/Special:FilePath/Meta%20Quest%203%20Top%20View.jpg",
+    "source_page": "https://commons.wikimedia.org/wiki/File:Meta_Quest_3_Top_View.jpg"
+  },
+  {
+    "title": "Apple Vision Pro",
+    "outfile": "apple-vision-pro.jpg",
+    "download_url": "https://commons.wikimedia.org/wiki/Special:FilePath/Apple%20Vision%20Pro%20on%20display.jpg",
+    "source_page": "https://commons.wikimedia.org/wiki/File:Apple_Vision_Pro_on_display.jpg"
+  },
+  {
+    "title": "Intel NUC",
+    "outfile": "intel-nuc.jpg",
+    "download_url": "https://commons.wikimedia.org/wiki/Special:FilePath/Intel%20NUC.jpg",
+    "source_page": "https://commons.wikimedia.org/wiki/File:Intel_NUC.jpg"
+  },
+  {
+    "title": "ASUS ROG Laptop (generic)",
+    "outfile": "asus-rog-laptop.jpg",
+    "download_url": "https://commons.wikimedia.org/wiki/Special:FilePath/Asus%20ROG%20Laptop%20Keyboard.jpg",
+    "source_page": "https://commons.wikimedia.org/wiki/File:Asus_ROG_Laptop_Keyboard.jpg"
+  },
+  {
+    "title": "Philips Hue Starterset (symbolisch)",
+    "outfile": "philips-hue.jpg",
+    "download_url": "https://commons.wikimedia.org/wiki/Special:FilePath/Philips%20Hue%20hub%20and%202%20bulbs.jpg",
+    "source_page": "https://commons.wikimedia.org/wiki/File:Philips_Hue_hub_and_2_bulbs.jpg"
+  },
+  {
+    "title": "Samsung Galaxy S24",
+    "outfile": "samsung-galaxy-s24.jpg",
+    "download_url": "https://commons.wikimedia.org/wiki/Special:FilePath/Samsung%20Galaxy%20S24.jpg",
+    "source_page": "https://commons.wikimedia.org/wiki/File:Samsung_Galaxy_S24.jpg"
+  },
+  {
+    "title": "Apple iPhone 15",
+    "outfile": "apple-iphone-15.jpg",
+    "download_url": "https://commons.wikimedia.org/wiki/Special:FilePath/Apple%20iPhone%2015.jpg",
+    "source_page": "https://commons.wikimedia.org/wiki/File:Apple_iPhone_15.jpg"
+  },
+  {
+    "title": "AVM FRITZ!Box (3390, symbolisch)",
+    "outfile": "avm-fritzbox.jpg",
+    "download_url": "https://commons.wikimedia.org/wiki/Special:FilePath/AVM%20FRITZ%21Box%203390%20-%20Top.jpg",
+    "source_page": "https://commons.wikimedia.org/wiki/File:AVM_FRITZ!Box_3390_-_Top.jpg"
+  },
+  {
+    "title": "Ableton Live (Screenshot)",
+    "outfile": "ableton-live.png",
+    "download_url": "https://commons.wikimedia.org/wiki/Special:FilePath/Ableton%20Live%20Screenshot.png",
+    "source_page": "https://commons.wikimedia.org/wiki/File:Ableton_Live_Screenshot.png"
+  },
+  {
+    "title": "UiPath Logo (PD-textlogo)",
+    "outfile": "uipath-logo.png",
+    "download_url": "https://commons.wikimedia.org/wiki/Special:FilePath/UiPath%20Logo.png",
+    "source_page": "https://commons.wikimedia.org/wiki/File:UiPath_Logo.png"
+  }
+]

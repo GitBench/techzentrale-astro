@@ -1,0 +1,22 @@
+{
+  "name": "techzentrale",
+  "version": "0.0.2",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "format": "prettier -w ."
+  },
+  "dependencies": {
+    "astro": "^4.11.0",
+    "@astrojs/rss": "^4.0.6",
+    "@astrojs/mdx": "^3.1.0",
+    "sharp": "^0.33.4"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3",
+    "typescript": "^5.5.4"
+  }
+}

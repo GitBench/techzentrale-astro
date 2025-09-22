@@ -1,0 +1,112 @@
+---
+title: "Self-Hosting in 30 Minuten: Dein Homelab auf einem Mini-PC"
+description: "Docker, Traefik, Portainer & sichere Updates – ein kompletter Blueprint für dein eigenes Home-Lab."
+date: 2025-09-19
+tags: ["DevOps", "Docker", "Homelab", "Self-Hosting"]
+cover: "/images/homelab-mini-pc.jpg"
+readingTime: 14
+sources:
+  - name: "Docker Docs"
+    url: "https://docs.docker.com/"
+  - name: "Traefik Proxy"
+    url: "https://doc.traefik.io/traefik/"
+  - name: "Portainer"
+    url: "https://www.portainer.io/"
+---
+import AmazonBox from "../../components/AmazonBox.astro";
+
+## Einleitung
+Self‑Hosting boomt – nicht nur aus Datenschutzgründen, sondern auch, weil **Mini‑PCs** heute leise, sparsam und erstaunlich leistungsfähig sind. Dieser Guide zeigt dir ein **pragmatisches Setup**: Docker als Laufzeit, Traefik als Reverse‑Proxy mit TLS, Portainer fürs GUI – plus Security‑Basics und sinnvolle Dienste für den Alltag.
+
+### Für wen ist dieser Guide?
+- Du willst in *unter einer Stunde* ein stabiles Homelab.  
+- Du bevorzugst **Wartbarkeit** statt Bastelorgien.  
+- Du möchtest deine **Dienste per Domain + HTTPS** erreichen.
+
+## Empfohlene Hardware
+Ein stromsparender, moderner N100/N305‑Mini‑PC ist für 24/7 ideal. Wichtig sind **NVMe‑SSD** und **mind. 16 GB RAM**.
+
+<AmazonBox title="Beelink Mini S12 Pro (Intel N100, 16GB RAM, 512GB SSD)" asin="B0CXYZ1234" price="€ 289,00" rating={4.5} />
+
+Alternativ klassisch:
+<AmazonBox title="Intel NUC 12 Pro (i5, 16GB RAM, 1TB SSD)" asin="B0ABCD5678" price="€ 699,00" rating={4.5} />
+
+> Tipp: Miss den **Leerlaufverbrauch** (Ziel: 6–12 W). Das spart bares Geld.
+
+## Basis-OS installieren
+Ich empfehle **Ubuntu Server LTS** oder **Debian** (minimal). Nach der Installation:
+
+```bash
+sudo apt update && sudo apt upgrade -y
+sudo timedatectl set-timezone Europe/Berlin
+```
+
+## Docker & Compose
+Docker bequem per Script installieren und den User zur Gruppe hinzufügen:
+
+```bash
+curl -fsSL https://get.docker.com | sh
+sudo usermod -aG docker $USER
+newgrp docker
+```
+
+## Traefik als Reverse Proxy (TLS via Let's Encrypt)
+Traefik nimmt dir Zertifikate, Routing und einfache Observability ab.
+
+```yaml
+# docker-compose.yml (Grundlage)
+services:
+  traefik:
+    image: traefik:v3.1
+    command:
+      - "--providers.docker=true"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.le.acme.httpchallenge=true"
+      - "--certificatesresolvers.le.acme.email=you@example.com"
+      - "--certificatesresolvers.le.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./letsencrypt:/letsencrypt
+    restart: always
+```
+
+Für **jeden Dienst** definierst du Labels, z. B. für Portainer:
+
+```yaml
+  portainer:
+    image: portainer/portainer-ce:latest
+    ports: ["9443:9443"]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    restart: always
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.portainer.rule=Host(`portainer.deinedomain.de`)"
+      - "traefik.http.routers.portainer.entrypoints=websecure"
+      - "traefik.http.routers.portainer.tls.certresolver=le"
+```
+
+## Dienste, die sich lohnen
+- **Vaultwarden** (Bitwarden‑Server) – Passwort‑Manager self‑hosted  
+- **Plausible** – datenschutzfreundliche Analytics  
+- **Paperless‑ngx** – Dokumenten‑Management
+
+Und fürs Netz:
+<AmazonBox title="TP-Link 2.5G USB-C Adapter (für schnellen Uplink)" asin="B0B7XYZ001" price="€ 24,99" rating={4.5} />
+
+## Sicherheit & Updates
+- **Unattended‑Upgrades** für kritische Patches aktivieren.  
+- **SSH Hardening** (Key‑Auth, Fail2ban).  
+- **Backups**: `restic` + S3/Backblaze, Rotation 7‑14‑30.
+
+## Monitoring light
+- **Uptime‑Kuma** für Reachability  
+- **Glances** oder **Netdata** lokal
+
+## Fazit
+Mit Docker, Traefik und Portainer hast du ein **pflegeleichtes, skalierbares** Setup. Starte klein, automatisiere Backups – und erweitere schrittweise um Dienste, die dir echten Mehrwert bringen.
