@@ -1,0 +1,42 @@
+{
+  "B09KXTCMSC": {
+    "title": "ONOFF Zigbee 3.0 USB Dongle Plus",
+    "image": "/images/zigbee.jpg"
+  },
+  "B0BXWZMQJ3": {
+    "title": "Aqara Presence Sensor FP2 with AI & mmWave",
+    "image": "/images/presence.jpg"
+  },
+  "B0DX2FPQFQ": {
+    "title": "Nuki Smart Lock Pro with Bluetooth, WiFi & Matter ",
+    "image": "/images/nuki.jpg"
+  },
+  "B0CCHQ38D2": {
+    "title": "Aqara 2K Interior Security Camera E1",
+    "image": "/images/aqCamera.jpg"
+  },
+  "B087DFLF9S": {
+    "title": "Samsung T7 Portable SSD - 1 TB - USB 3.2",
+    "image": "/images/usbSSD.jpg"
+  },
+  "B07W8Q8VY6": {
+    "title": "Logitech MX Keys S Wireless Keyboard",
+    "image": "/images/keyboard.jpg"
+  },
+  "B0DB2HLSS9": {
+    "title": "Logitech MX Ergo S Advanced Wireless Trackball Mouse",
+    "image": "/images/mouse.jpg"
+  },
+  "B07MM4V7NR": {
+    "title": "Logitech C920s HD PRO webcam, Full-HD 1080p",
+    "image": "/images/webcam.jpg"
+  },
+  " B0DHH1GXJ9": {
+    "title": "Jabra Engage 75 SE Wireless Stereo",
+    "image": "/images/jabra.jpg"
+  },
+  "B08QCNVCYV": {
+    "title": "Bosch Smart Home Compact Adapter Plug",
+    "image": "/images/plug.jpg"
+  }
+}
