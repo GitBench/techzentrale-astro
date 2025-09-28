@@ -1,51 +1,111 @@
 ---
-const { title, asin, price, rating = 4.5, max = 5 } = Astro.props;
-const link = `https://www.amazon.de/dp/${asin}?tag=Smartrichter-21`;
+/**
+ * AmazonBox.astro – JSON-gestützt
+ * Holt Titel/Beschreibung/Bild aus src/data/asin-data.json.
+ * Priorität: Props > JSON > Fallback.
+ *
+ * Props:
+ * - asin: string                // Lookup-Schlüssel
+ * - title?: string              // überschreibt JSON.title
+ * - description?: string        // überschreibt JSON.description
+ * - image?: string              // überschreibt JSON.image (absolut oder /images/… aus /public)
+ * - price?: string
+ * - rating?: number (default 4.5)
+ * - max?: number (default 5)
+ * - href?: string               // kompletter SiteStripe-Link; hat Vorrang vor asin
+ */
 
+import asinData from "../asin-data.json"; // relativ zu /src/components
+
+const {
+  asin,
+  title: titleProp,
+  description: descProp,
+  image: imageProp,
+  price,
+  rating = 4.5,
+  max = 5,
+  href,
+} = Astro.props;
+
+// JSON-Eintrag per ASIN finden (unterstützt Objekt- und Array-Format)
+function findByAsin(db: unknown, key: string) {
+  if (!key || !db) return undefined;
+  if (Array.isArray(db)) return db.find((x: any) => x?.asin === key);
+  if (typeof db === "object" && db !== null && key in (db as any)) return (db as any)[key];
+  return undefined;
+}
+const rec = findByAsin(asinData as any, asin);
+
+// Felder mit Fallbacks
+const title = titleProp ?? rec?.title ?? "Produkt";
+const description = descProp ?? rec?.description ?? "";
+const image = imageProp ?? rec?.image ?? "";
+const link = (href && href.trim())
+  ? href.trim()
+  : (asin ? `https://www.amazon.de/dp/${asin}?tag=Smartrichter-21` : "#");
+
+// Sterne-String
 const full = Math.floor(rating);
 const half = rating % 1 >= 0.5 ? 1 : 0;
 const empty = Math.max(0, max - full - half);
 const stars = "★".repeat(full) + (half ? "☆" : "") + "☆".repeat(empty);
 ---
 
-<div style="
-  border:1px solid #e2e8f0;
-  border-radius:12px;
-  padding:16px;
-  margin:16px 0;
-  background:#ffffff;
-  color:#111111;
-  box-shadow:0 4px 12px rgba(0,0,0,.08);
-">
-  <div style="display:flex;align-items:center;gap:8px;justify-content:space-between;flex-wrap:wrap;">
-    <span style="
-      display:inline-flex;align-items:center;gap:.4rem;
-      background:#ff9900;color:#fff;padding:.22rem .6rem;border-radius:999px;
-      font-size:.8rem;font-weight:700;
-    ">Empfehlung</span>
-    <h3 style="margin:0;font-size:1.05rem;line-height:1.3;color:#111;">{title}</h3>
+<div class="amazon-box" role="complementary" aria-label="Affiliate-Empfehlung">
+  <div class="media">
+    {image ? (
+      <a href={link} target="_blank" rel="nofollow sponsored noopener" class="thumb">
+        <img src={image} alt={title} loading="lazy" />
+      </a>
+    ) : (
+      <div class="thumb placeholder">kein Bild</div>
+    )}
   </div>
 
-  <p style="margin:.5rem 0 .3rem 0;color:#f59e0b;font-weight:600;">
-    {stars} {rating.toFixed(1)}/{max}
-  </p>
+  <div class="body">
+    <div class="head">
+      <span class="badge">Empfehlung</span>
+      <a href={link} target="_blank" rel="nofollow sponsored noopener" class="title">{title}</a>
+    </div>
 
-  {price && (
-    <p style="margin:.2rem 0 .8rem 0;">
-      <span style="color:#555;">Preis:</span> <b style="color:#111;">{price}</b>
-    </p>
-  )}
+    {description && <p class="desc">{description}</p>}
 
-  <a href={link} target="_blank" rel="nofollow sponsored noopener"
-     style="
-       display:inline-block;text-decoration:none;
-       background:#232f3e;color:#fff;padding:.55rem .9rem;border-radius:10px;
-       font-weight:600;
-     ">
-    Jetzt bei Amazon ansehen
-  </a>
+    <div class="meta">
+      <span class="stars" aria-label={`Bewertung ${rating} von ${max}`}>
+        {stars} <b>{String(rating).replace('.', ',')}/{max}</b>
+      </span>
+      {price && <span class="price">Preis: <b>{price}</b></span>}
+    </div>
 
-  <div style="margin-top:.45rem;font-size:.9rem;color:#666;">
-    Hinweis: Affiliate-Link. Für dich entstehen keine Mehrkosten.
+    <a href={link} target="_blank" rel="nofollow sponsored noopener" class="cta">
+      👉 Jetzt bei Amazon ansehen
+    </a>
+    <div class="note">Hinweis: Affiliate-Link. Für dich entstehen keine Mehrkosten.</div>
   </div>
 </div>
+
+<style>
+  .amazon-box{
+    margin:1.2rem 0; padding:1rem;
+    border:1px solid var(--border, #e2e8f0);
+    border-radius:12px; background:var(--panel, #fff);
+    box-shadow:var(--shadow, 0 6px 18px rgba(0,0,0,.06));
+    display:grid; grid-template-columns:110px 1fr; gap:16px; align-items:start;
+  }
+  .thumb{display:block; width:110px; height:110px; border-radius:10px; border:1px solid #eee; overflow:hidden; background:#f7f7f9;}
+  .thumb img{width:100%; height:100%; object-fit:cover; display:block;}
+  .placeholder{display:flex; align-items:center; justify-content:center; color:#6b7280; font-size:.85rem;}
+  .head{display:flex; gap:.6rem; align-items:center; justify-content:space-between; flex-wrap:wrap; margin-bottom:.25rem;}
+  .badge{display:inline-flex; align-items:center; gap:.4rem; background:#ff9900; color:#fff; padding:.18rem .55rem; border-radius:999px; font-size:.8rem; font-weight:700;}
+  .title{font-weight:700; text-decoration:none; color:var(--primary, #3b5bff);}
+  .desc{margin:.35rem 0 .5rem; color:#374151; font-size:.95rem;}
+  .meta{display:flex; gap:1rem; align-items:center; margin:.4rem 0; color:var(--muted, #667085);}
+  .stars{letter-spacing:.1rem;}
+  .price b{color:var(--text, #111);}
+  .cta{display:inline-flex; margin-top:.3rem; padding:.55rem .9rem; border:1px solid var(--border, #e2e8f0);
+       border-radius:10px; background:var(--panel2, #f6f7fb); text-decoration:none; color:var(--primary, #3b5bff); font-weight:600;}
+  .cta:hover{filter:brightness(0.98);}
+  .note{margin-top:.35rem; color:var(--muted, #667085); font-size:.9rem;}
+  @media (max-width:540px){ .amazon-box{ grid-template-columns:1fr; } .thumb{ width:100%; height:160px; } }
+</style>
