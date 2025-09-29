@@ -1,18 +1,18 @@
 ---
 import Base from "../../layouts/Base.astro";
-import AmazonBox from "../../components/AmazonBox.astro";
 import { getCollection } from "astro:content";
 
 export async function getStaticPaths() {
   const posts = await getCollection("posts");
   return posts.map((post) => ({
-    params: { slug: post.slug },
+    params: { slug: post.slug },   // z. B. "edge-ai-geraete-2025-trend"
     props: { post },
   }));
 }
 
 const { post } = Astro.props;
 
+// ⛑️ Absicherung: Keine Daten? -> 404-Seite statt TypeError
 if (!post) {
   const bad = JSON.stringify(Astro.params, null, 2);
   const msg = `Post not found for params: ${bad}`;
@@ -20,45 +20,23 @@ if (!post) {
 }
 
 const { Content } = await post.render();
+// In Astro 3+ liegt Frontmatter an post.data:
 const data = post.data;
 ---
 
 <Base title={data?.title ?? "Beitrag"} description={data?.description}>
   <article class="prose" style="padding:24px 0">
     <div class="meta">
-      {data?.date
-        ? new Date(data.date).toLocaleDateString("de-DE", {
-            year: "numeric",
-            month: "long",
-            day: "2-digit",
-          })
-        : ""} · {data?.readingTime ?? 6} Min
+      {data?.date ? new Date(data.date).toLocaleDateString('de-DE',{year:'numeric',month:'long',day:'2-digit'}) : ""} · {data?.readingTime ?? 6} Min
     </div>
-
     <h1>{data?.title ?? "Unbenannter Beitrag"}</h1>
-
-    {data?.cover && (
-      <img
-        src={data.cover}
-        alt={data.title}
-        style="border-radius:12px;margin:10px 0"
-      />
-    )}
-
-    {/* Wichtig: MDX-Komponenten registrieren */}
-    <Content components={{ AmazonBox }} />
-
+    {data?.cover && <img src={data.cover} alt={data.title} style="border-radius:12px;margin:10px 0" />}
+    <Content />
     {Array.isArray(data?.sources) && data.sources.length ? (
       <section style="margin-top:18px">
         <h3>Quellen</h3>
         <ul>
-          {data.sources.map((s) => (
-            <li>
-              <a href={s.url} target="_blank" rel="noopener">
-                {s.name ?? s.url}
-              </a>
-            </li>
-          ))}
+          {data.sources.map((s) => <li><a href={s.url} target="_blank" rel="noopener">{s.name ?? s.url}</a></li>)}
         </ul>
       </section>
     ) : null}
