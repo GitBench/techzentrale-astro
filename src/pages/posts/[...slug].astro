@@ -1,6 +1,11 @@
 ---
 import Base from "../../layouts/Base.astro";
+import Base from "../../components/AmazonBox.astro";
+
 import { getCollection } from "astro:content";
+
+
+
 
 export async function getStaticPaths() {
   const posts = await getCollection("posts");
