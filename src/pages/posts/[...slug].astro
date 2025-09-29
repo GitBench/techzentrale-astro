@@ -1,11 +1,14 @@
 ---
-import Base from "../../layouts/Base.astro";
-import Base from "../../components/AmazonBox.astro";
 
-import { getCollection } from "astro:content";
-
-
-
+@@
+ import Base from "../../layouts/Base.astro";
+ import AmazonBox from "../../components/AmazonBox.astro";
+ import AuthorBox from "../../components/AuthorBox.astro";
+ import { getCollection } from "astro:content";
+@@
+ const { Content } = await post.render();
+@@
+ <Content components={{ AmazonBox, AuthorBox }} />
 
 export async function getStaticPaths() {
   const posts = await getCollection("posts");
