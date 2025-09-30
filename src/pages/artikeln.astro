@@ -1,0 +1,50 @@
+---
+import { getCollection } from 'astro:content';
+
+const articles = await getCollection('artikeln', ({ data }) => !data.draft);
+
+// Neueste zuerst
+articles.sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime());
+---
+
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>Artikeln</title>
+  </head>
+  <body>
+    <main>
+      <h1>Artikeln</h1>
+
+      {articles.length === 0 ? (
+        <p>
+          Noch keine Artikel vorhanden.<br />
+          Lege einen Plan in <code>plans/</code> an und führe dann:
+          <br />
+          <code>node scripts/generate-article.mjs plans/dein-plan.yaml</code>
+        </p>
+      ) : (
+        <ul style="list-style:none; padding:0; display:grid; gap:2rem;">
+          {articles.map(({ slug, data }) => (
+            <li style="border:1px solid #ddd; border-radius:8px; overflow:hidden;">
+              <a href={`/artikeln/${slug}/`} style="display:block; text-decoration:none; color:inherit;">
+                {data.cover && (
+                  <img
+                    src={data.cover}
+                    alt={data.title}
+                    style="width:100%; max-height:200px; object-fit:cover;"
+                  />
+                )}
+                <div style="padding:1rem;">
+                  <h2>{data.title}</h2>
+                  <small>{data.date} • {(data.tags || []).join(', ')}</small>
+                  <p>{data.description}</p>
+                </div>
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+    </main>
+  </body>
+</html>
