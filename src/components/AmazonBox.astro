@@ -1,111 +1,122 @@
 ---
 /**
- * AmazonBox.astro – JSON-gestützt
- * Holt Titel/Beschreibung/Bild aus src/data/asin-data.json.
- * Priorität: Props > JSON > Fallback.
- *
+ * /site/src/components/AmazonBox.astro
  * Props:
- * - asin: string                // Lookup-Schlüssel
- * - title?: string              // überschreibt JSON.title
- * - description?: string        // überschreibt JSON.description
- * - image?: string              // überschreibt JSON.image (absolut oder /images/… aus /public)
- * - price?: string
- * - rating?: number (default 4.5)
- * - max?: number (default 5)
- * - href?: string               // kompletter SiteStripe-Link; hat Vorrang vor asin
+ *  - asin:   string (erforderlich)
+ *  - link:   string (erforderlich, Affiliate-URL)
+ *  - cta:    string (optional, Standard: "Bei Amazon ansehen")
+ *
+ * Hinweis: Wir lesen zusätzlich Metadaten aus /site/asin-data.json:
+ *  {
+ *    "B0CCHQ38D2": { "title": "Produktname", "image": "/images/foo.jpg", "price": "99,00 €" },
+ *    ...
+ *  }
  */
 
-import asinData from "../../asin-data.json"; // relativ zu /src/components
-
-const {
-  asin,
-  title: titleProp,
-  description: descProp,
-  image: imageProp,
-  price,
-  rating = 4.5,
-  max = 5,
-  href,
-} = Astro.props;
-
-// JSON-Eintrag per ASIN finden (unterstützt Objekt- und Array-Format)
-function findByAsin(db: unknown, key: string) {
-  if (!key || !db) return undefined;
-  if (Array.isArray(db)) return db.find((x: any) => x?.asin === key);
-  if (typeof db === "object" && db !== null && key in (db as any)) return (db as any)[key];
-  return undefined;
+interface Props {
+  asin: string;
+  link: string;
+  cta?: string;
 }
-const rec = findByAsin(asinData as any, asin);
 
-// Felder mit Fallbacks
-const title = titleProp ?? rec?.title ?? "Produkt";
-const description = descProp ?? rec?.description ?? "";
-const image = imageProp ?? rec?.image ?? "";
-const link = (href && href.trim())
-  ? href.trim()
-  : (asin ? `https://www.amazon.de/dp/${asin}?tag=Smartrichter-21` : "#");
+// JSON mit ASIN-Metadaten laden (Passe den Pfad an, falls deine Datei woanders liegt)
+import asinData from "../../asin-data.json";
 
-// Sterne-String
-const full = Math.floor(rating);
-const half = rating % 1 >= 0.5 ? 1 : 0;
-const empty = Math.max(0, max - full - half);
-const stars = "★".repeat(full) + (half ? "☆" : "") + "☆".repeat(empty);
+// Props
+const { asin, link, cta = "Bei Amazon ansehen" } = Astro.props;
+
+// Metadaten aus JSON (robust mit Fallbacks)
+const meta = (asinData && typeof asinData === "object") ? (asinData as any)[asin] || {} : {};
+const title: string = meta.title ?? `Amazon-Produkt ${asin}`;
+const image: string | null =
+  meta.image?.trim?.() ||
+  (meta.img?.trim?.() ?? null) ||  // falls dein JSON "img" statt "image" nutzt
+  null;
+const price: string | null = meta.price ?? null;
+
+// Bild-Alt-Text
+const alt = title || `Produktbild ${asin}`;
 ---
 
-<div class="amazon-box" role="complementary" aria-label="Affiliate-Empfehlung">
-  <div class="media">
-    {image ? (
-      <a href={link} target="_blank" rel="nofollow sponsored noopener" class="thumb">
-        <img src={image} alt={title} loading="lazy" />
-      </a>
-    ) : (
-      <div class="thumb placeholder">kein Bild</div>
-    )}
-  </div>
-
-  <div class="body">
-    <div class="head">
-      <span class="badge">Empfehlung</span>
-      <a href={link} target="_blank" rel="nofollow sponsored noopener" class="title">{title}</a>
-    </div>
-
-    {description && <p class="desc">{description}</p>}
-
-    <div class="meta">
-      <span class="stars" aria-label={`Bewertung ${rating} von ${max}`}>
-        {stars} <b>{String(rating).replace('.', ',')}/{max}</b>
-      </span>
-      {price && <span class="price">Preis: <b>{price}</b></span>}
-    </div>
-
-    <a href={link} target="_blank" rel="nofollow sponsored noopener" class="cta">
-      👉 Jetzt bei Amazon ansehen
-    </a>
-    <div class="note">Hinweis: Affiliate-Link. Für dich entstehen keine Mehrkosten.</div>
-  </div>
-</div>
-
 <style>
-  .amazon-box{
-    margin:1.2rem 0; padding:1rem;
-    border:1px solid var(--border, #e2e8f0);
-    border-radius:12px; background:var(--panel, #fff);
-    box-shadow:var(--shadow, 0 6px 18px rgba(0,0,0,.06));
-    display:grid; grid-template-columns:110px 1fr; gap:16px; align-items:start;
+  .amz-card {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 1rem;
+    border: 1px solid var(--astro-border, #e3e3e3);
+    border-radius: 12px;
+    padding: 1rem;
+    text-decoration: none;
+    background: #fff;
+    transition: transform .08s ease-out, box-shadow .08s ease-out, border-color .2s;
   }
-  .thumb{display:block; width:110px; height:110px; border-radius:10px; border:1px solid #eee; overflow:hidden; background:#f7f7f9;}
-  .thumb img{width:100%; height:100%; object-fit:cover; display:block;}
-  .placeholder{display:flex; align-items:center; justify-content:center; color:#6b7280; font-size:.85rem;}
-  .head{display:flex; gap:.6rem; align-items:center; justify-content:space-between; flex-wrap:wrap; margin-bottom:.25rem;}
-  .badge{display:inline-flex; align-items:center; gap:.4rem; background:#ff9900; color:#fff; padding:.18rem .55rem; border-radius:999px; font-size:.8rem; font-weight:700;}
-  .title{font-weight:700; text-decoration:none; color:var(--primary, #3b5bff);}
-  .desc{margin:.35rem 0 .5rem; color:#374151; font-size:.95rem;}
-  .meta{display:flex; gap:1rem; align-items:center; margin:.4rem 0; color:var(--muted, #667085);}
-  .stars{letter-spacing:.1rem;}
-  .price b{color:var(--text, #111);}
-  .cta{display:inline-flex; margin-top:.3rem; padding:.55rem .9rem; border:1px solid var(--border, #e2e8f0);
-       border-radius:10px; background:var(--panel2, #f6f7fb); text-decoration:none; color:var(--primary, #3b5bff); font-weight:600;}
-  .cta:hover{filter:brightness(0.98);}
-  .note{margin-top:.35rem; color:var(--muted, #667085); font-size:.9rem;}
-  @media (max-width:540px){ .amazon-box{ grid-template-columns:1fr; } .thumb{ width:100%; height:160px; } }
+  .amz-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 24px rgba(0,0,0,.06);
+    border-color: #d8d8d8;
+  }
+  .amz-img {
+    width: 100%;
+    height: 100%;
+    max-height: 120px;
+    object-fit: contain;
+    background: #fafafa;
+    border-radius: 8px;
+  }
+  .amz-title {
+    font-weight: 600;
+    line-height: 1.25;
+    margin: 0 0 .35rem 0;
+    color: inherit;
+  }
+  .amz-meta {
+    font-size: .95rem;
+    opacity: .85;
+    margin-bottom: .5rem;
+  }
+  .amz-cta {
+    display: inline-block;
+    border: 1px solid #e0e0e0;
+    padding: .5rem .75rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: .95rem;
+    text-decoration: none;
+    background: #f8f8f8;
+  }
+  .amz-cta:hover {
+    background: #f2f2f2;
+  }
+
+  /* Mobile: Bild über dem Text */
+  @media (max-width: 640px) {
+    .amz-card {
+      grid-template-columns: 1fr;
+    }
+    .amz-img {
+      max-height: 180px;
+    }
+  }
+
+  /* kleiner Hinweis unten */
+  .amz-disclaimer {
+    margin-top: .35rem;
+    font-size: .8rem;
+    opacity: .7;
+  }
 </style>
+
+<a class="amz-card" href={link} target="_blank" rel="nofollow sponsored noopener">
+  { image
+    ? <img class="amz-img" src={image} alt={alt} loading="lazy" decoding="async" />
+    : <div class="amz-img" style="display:flex;align-items:center;justify-content:center;font-size:.9rem;opacity:.6;">
+        Kein Bild vorhanden
+      </div>
+  }
+  <div>
+    <h3 class="amz-title">{title}</h3>
+    { price ? <div class="amz-meta">{price}</div> : null }
+    <span class="amz-cta">{cta}</span>
+    <div class="amz-disclaimer">Werbung / Affiliate-Link</div>
+  </div>
+</a>
