@@ -39,72 +39,117 @@ const alt = title || `Produktbild ${asin}`;
 ---
 
 <style>
+  /* Grundfarben für hell/dunkel */
+  :root {
+    --amz-text: #0a0a0a;          /* fast schwarz */
+    --amz-muted: #383838;         /* dunkles Grau für Meta */
+    --amz-border: #cfcfcf;        /* sichtbarere Karte */
+    --amz-bg: #ffffff;
+    --amz-imgbg: #f3f3f3;
+
+    --amz-btn-fg: #111111;
+    --amz-btn-bg: #f0f0f0;
+    --amz-btn-border: #bdbdbd;
+    --amz-btn-bg-hover: #e6e6e6;
+    --amz-btn-border-hover: #a6a6a6;
+    --amz-focus: #2563eb;         /* blaues Focus-Outline */
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --amz-text: #f5f5f5;
+      --amz-muted: #d1d1d1;
+      --amz-border: #4a4a4a;
+      --amz-bg: #121212;
+      --amz-imgbg: #1b1b1b;
+
+      --amz-btn-fg: #111111;
+      --amz-btn-bg: #f5f5f5;
+      --amz-btn-border: #d0d0d0;
+      --amz-btn-bg-hover: #e8e8e8;
+      --amz-btn-border-hover: #c2c2c2;
+      --amz-focus: #60a5fa;
+    }
+  }
+
   .amz-card {
     display: grid;
     grid-template-columns: 120px 1fr;
     gap: 1rem;
-    border: 1px solid var(--astro-border, #e3e3e3);
+    border: 1px solid var(--amz-border);
     border-radius: 12px;
     padding: 1rem;
+    background: var(--amz-bg);
+    color: var(--amz-text);
     text-decoration: none;
-    background: #fff;
-    transition: transform .08s ease-out, box-shadow .08s ease-out, border-color .2s;
+    transition: transform .08s ease-out, box-shadow .12s ease-out, border-color .12s;
   }
   .amz-card:hover {
     transform: translateY(-1px);
-    box-shadow: 0 6px 24px rgba(0,0,0,.06);
-    border-color: #d8d8d8;
+    box-shadow: 0 6px 24px rgba(0,0,0,.08);
+    border-color: var(--amz-border);
   }
+  .amz-card:focus-visible {
+    outline: 3px solid var(--amz-focus);
+    outline-offset: 2px;
+  }
+
   .amz-img {
     width: 100%;
     height: 100%;
     max-height: 120px;
     object-fit: contain;
-    background: #fafafa;
+    background: var(--amz-imgbg);
     border-radius: 8px;
   }
+
   .amz-title {
-    font-weight: 600;
+    color: var(--amz-text);
+    font-weight: 700;             /* kräftiger */
     line-height: 1.25;
-    margin: 0 0 .35rem 0;
-    color: inherit;
+    margin: 0 0 .5rem 0;
   }
+
   .amz-meta {
-    font-size: .95rem;
-    opacity: .85;
-    margin-bottom: .5rem;
+    color: var(--amz-muted);
+    font-size: .96rem;
+    margin: 0 0 .75rem 0;
   }
+
   .amz-cta {
     display: inline-block;
-    border: 1px solid #e0e0e0;
-    padding: .5rem .75rem;
-    border-radius: 8px;
-    font-weight: 600;
+    padding: .6rem .9rem;
+    border-radius: 10px;
+    font-weight: 700;
     font-size: .95rem;
+    line-height: 1;
+    color: var(--amz-btn-fg);
+    background: var(--amz-btn-bg);
+    border: 1px solid var(--amz-btn-border);
     text-decoration: none;
-    background: #f8f8f8;
+    user-select: none;
   }
   .amz-cta:hover {
-    background: #f2f2f2;
+    background: var(--amz-btn-bg-hover);
+    border-color: var(--amz-btn-border-hover);
+  }
+  .amz-cta:focus-visible {
+    outline: 3px solid var(--amz-focus);
+    outline-offset: 2px;
   }
 
-  /* Mobile: Bild über dem Text */
   @media (max-width: 640px) {
-    .amz-card {
-      grid-template-columns: 1fr;
-    }
-    .amz-img {
-      max-height: 180px;
-    }
+    .amz-card { grid-template-columns: 1fr; }
+    .amz-img  { max-height: 180px; }
   }
 
-  /* kleiner Hinweis unten */
   .amz-disclaimer {
-    margin-top: .35rem;
-    font-size: .8rem;
-    opacity: .7;
+    margin-top: .45rem;
+    font-size: .82rem;
+    color: var(--amz-muted);
   }
 </style>
+
 
 <a class="amz-card" href={link} target="_blank" rel="nofollow sponsored noopener">
   { image
