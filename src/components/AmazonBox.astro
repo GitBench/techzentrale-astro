@@ -168,7 +168,7 @@ const alt = title || `Produktbild ${asin}`;
   }
   <div>
     <h3 class="amz-title">{title}</h3>
-    { price ? <div class="amz-price">{price}</div> : null }
+    { price ? <div class="amz-price">{price}</div> : <div class="amz-price">Preis prüfen</div> }
     <span class="amz-cta">{cta}</span>
     <div class="amz-disclaimer">Werbung / Affiliate-Link</div>
   </div>
