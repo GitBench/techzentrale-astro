@@ -116,6 +116,14 @@ const alt = title || `Produktbild ${asin}`;
     margin: 0 0 .75rem 0;
   }
 
+  .amz-price {
+    color: #b12704;        /* klassisches Amazon-Rot */
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: .75rem;
+   }
+
+
   .amz-cta {
     display: inline-block;
     padding: .6rem .9rem;
@@ -160,7 +168,7 @@ const alt = title || `Produktbild ${asin}`;
   }
   <div>
     <h3 class="amz-title">{title}</h3>
-    { price ? <div class="amz-meta">{price}</div> : null }
+    { price ? <div class="amz-price">{price}</div> : null }
     <span class="amz-cta">{cta}</span>
     <div class="amz-disclaimer">Werbung / Affiliate-Link</div>
   </div>
