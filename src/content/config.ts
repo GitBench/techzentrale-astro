@@ -12,15 +12,6 @@ const baseSchema = z.object({
 });
 
 export const collections = {
-  posts: defineCollection({ // = News
-    type: "content",
-    schema: baseSchema,
-  }),
-  articles: defineCollection({ // = Langform
-    type: "content",
-    schema: baseSchema.extend({
-      // optional: Langform-spezifisches
-      wordGoal: z.number().int().positive().optional()
-    }),
-  }),
+  posts: defineCollection({ type: "content", schema: baseSchema }),     // News
+  articles: defineCollection({ type: "content", schema: baseSchema }),  // Langform
 };
