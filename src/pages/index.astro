@@ -15,9 +15,9 @@ function getDate(d) {
 const sorted = posts.sort((a, b) => getDate(b.data) - getDate(a.data));
 ---
 
-<Base title="Blog" description="Moderne Tech-Insights, kompakt erklärt.">
+<Base title="News" description="Moderne Tech-Insights, kompakt erklärt.">
   <section style="padding:24px 0">
-    <h1 style="margin:.4rem 0">Neueste Artikel</h1>
+    <h1 style="margin:.4rem 0">Neueste News</h1>
     <div class="grid" style="margin-top:12px">
       {sorted.map(({ data, slug }) => (
         <a class="card" href={`/posts/${slug}/`}>
