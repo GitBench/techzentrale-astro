@@ -1,9 +1,11 @@
 ---
+// src/pages/posts/[...slug].astro
 import Base from "../../layouts/Base.astro";
+import { getCollection } from "astro:content";
+
 import AmazonBox from "../../components/AmazonBox.astro";
 import AuthorBox from "../../components/AuthorBox.astro";
 import AmazonSearchBox from "../../components/AmazonSearchBox.astro";
-import { getCollection } from "astro:content";
 
 export async function getStaticPaths() {
   const posts = await getCollection("posts");
@@ -14,32 +16,49 @@ export async function getStaticPaths() {
 }
 
 const { post } = Astro.props;
-if (!post) throw new Error(`Post not found for params: ${JSON.stringify(Astro.params)}`);
+if (!post) {
+  throw new Error(`Post not found for params: ${JSON.stringify(Astro.params)}`);
+}
 const { Content } = await post.render();
 const data = post.data;
 ---
 
 <Base title={data?.title ?? "Beitrag"} description={data?.description}>
-  <article class="prose" style="padding:24px 0">
-    {data?.date && (
-      <div class="meta">
-        {new Date(data.date).toLocaleDateString("de-DE", {year: "numeric", month: "long", day: "2-digit"})}
-        {" · "}{data?.readingTime ?? 6} Min
-      </div>
-// … dein bestehendes Template …
-<div class="post-grid">
-  <article class="prose">…</article>
-  <AmazonSearchBox position="right" market="de" />
-</div>
-    )}
+  <div class="post-grid">
+    <article class="prose">
+      {data?.date && (
+        <div class="meta">
+          {new Date(data.date).toLocaleDateString("de-DE", {
+            year: "numeric",
+            month: "long",
+            day: "2-digit",
+          })}
+          {" · "}{data?.readingTime ?? 6} Min
+        </div>
+      )}
 
-    <h1>{data?.title ?? "Unbenannter Beitrag"}</h1>
+      <h1>{data?.title ?? "Unbenannter Beitrag"}</h1>
 
-    {data?.cover && (
-      <img src={data.cover} alt={data.title} style="border-radius:12px;margin:10px 0" />
-    )}
+      {data?.cover && (
+        <img src={data.cover} alt={data.title} class="cover" />
+      )}
 
-    {/* MDX-Komponenten bereitstellen */}
-    <Content components={{ AmazonBox, AuthorBox }} />
-  </article>
+      <Content components={{ AmazonBox, AuthorBox }} />
+    </article>
+
+    <AmazonSearchBox position="right" market="de" />
+  </div>
 </Base>
+
+<style>
+  .post-grid {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 24px;
+  }
+  @media (max-width: 900px) {
+    .post-grid { grid-template-columns: 1fr; }
+  }
+  .cover { border-radius: 12px; margin: 10px 0; max-width: 100%; height: auto; }
+  .meta { opacity: .8; margin: .25rem 0; }
+</style>
