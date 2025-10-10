@@ -1,0 +1,102 @@
+---
+const {
+  title = "Amazon durchsuchen",
+  placeholder = "Produkt, Marke, ASIN …",
+  market = "de",
+  position = "right" // "left" | "right"
+} = Astro.props;
+
+const searchApi = "/api/amazon-search"; // serverseitig
+function timeFmt(d){ try { return new Date(d).toLocaleString("de-DE"); } catch { return ""; } }
+---
+
+<aside class={`az-sidebar az-${position}`}>
+  <div class="az-card">
+    <div class="az-title">{title}</div>
+
+    <form class="az-form" id="azForm">
+      <input class="az-input" type="search" name="q" placeholder={placeholder} aria-label="Auf Amazon suchen" required />
+      <button class="az-btn" type="submit">Suchen</button>
+    </form>
+
+    <div class="az-note">Werbelinks • Partnerlinks</div>
+
+    <div id="azResults" class="az-results" hidden>
+      <div class="az-meta"><span id="azTs"></span></div>
+      <ul id="azList"></ul>
+    </div>
+
+    <div id="azEmpty" class="az-empty" hidden>Keine Treffer.</div>
+    <div id="azErr" class="az-err" hidden>Fehler bei der Suche.</div>
+  </div>
+</aside>
+
+<style>
+  .az-sidebar { position: sticky; top: 24px; align-self: start; }
+  .az-card { background: var(--panel,#111318); border:1px solid var(--border,rgba(255,255,255,.12));
+    border-radius:12px; padding:14px; }
+  .az-title { font-weight: 700; margin-bottom: 8px; }
+  .az-form { display:grid; gap:8px; margin-bottom: 8px; }
+  .az-input { padding:10px 12px; border-radius:10px; border:1px solid var(--border,rgba(255,255,255,.12));
+    background:rgba(255,255,255,.04); color: var(--text,#e8eaf1); }
+  .az-btn { padding:10px 12px; border-radius:10px; border:1px solid var(--border,rgba(255,255,255,.12));
+    background: var(--primary,#7c9cff); color:#0b0c0f; font-weight:700; cursor:pointer; }
+  .az-note { opacity:.7; font-size:.85rem; margin:4px 0 8px; }
+  .az-meta { opacity:.7; font-size:.8rem; margin:4px 0; }
+  .az-results ul { list-style:none; padding:0; margin:0; display:grid; gap:10px; }
+  .az-card-item { display:grid; grid-template-columns: 72px 1fr; gap:10px; align-items:center;
+    border:1px solid var(--border,rgba(255,255,255,.12)); border-radius:10px; padding:8px; }
+  .az-card-item img { width:72px; height:72px; object-fit:contain; }
+  .az-price { font-weight:700; margin-left:6px; }
+  .az-err, .az-empty { opacity:.8; font-size:.9rem; }
+  @media (max-width: 900px){ .az-sidebar { position: static; margin-top: 16px; } }
+</style>
+
+<script>
+  const form = document.getElementById('azForm');
+  const list = document.getElementById('azList');
+  const box = document.getElementById('azResults');
+  const tsEl = document.getElementById('azTs');
+  const emptyEl = document.getElementById('azEmpty');
+  const errEl = document.getElementById('azErr');
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const q = new FormData(form).get('q');
+    emptyEl.hidden = true; errEl.hidden = true; box.hidden = true;
+    list.innerHTML = '<li>Lade…</li>';
+
+    try {
+      const url = new URL({searchApi});
+      url.pathname = '{searchApi}';
+      url.searchParams.set('q', q);
+      url.searchParams.set('market', '{market}');
+      const r = await fetch(url.toString());
+      const data = await r.json();
+
+      list.innerHTML = '';
+      const items = data.items || [];
+      if (!items.length) { emptyEl.hidden = false; return; }
+
+      for (const it of items) {
+        const li = document.createElement('li');
+        li.className = 'az-card-item';
+        li.innerHTML = `
+          <img loading="lazy" alt="">
+          <div>
+            <a href="${it.url}" target="_blank" rel="nofollow noopener">${it.title || 'Produkt'}</a>
+            ${it.price ? `<span class="az-price">${it.price}</span>` : ''}
+            ${it.isPrime ? `<span title="Prime">🔹</span>` : ''}
+          </div>`;
+        li.querySelector('img').src = it.image || '/images/placeholder.png';
+        li.querySelector('img').alt = it.title || 'Produktbild';
+        list.appendChild(li);
+      }
+      tsEl.textContent = `Stand: ${new Date(data.ts || Date.now()).toLocaleString('de-DE')}`;
+      box.hidden = false;
+    } catch (err) {
+      list.innerHTML = '';
+      errEl.hidden = false;
+    }
+  });
+</script>
