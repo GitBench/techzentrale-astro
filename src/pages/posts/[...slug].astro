@@ -2,6 +2,7 @@
 import Base from "../../layouts/Base.astro";
 import AmazonBox from "../../components/AmazonBox.astro";
 import AuthorBox from "../../components/AuthorBox.astro";
+import AmazonSearchBox from "../../components/AmazonSearchBox.astro";
 import { getCollection } from "astro:content";
 
 export async function getStaticPaths() {
@@ -25,6 +26,11 @@ const data = post.data;
         {new Date(data.date).toLocaleDateString("de-DE", {year: "numeric", month: "long", day: "2-digit"})}
         {" · "}{data?.readingTime ?? 6} Min
       </div>
+// … dein bestehendes Template …
+<div class="post-grid">
+  <article class="prose">…</article>
+  <AmazonSearchBox position="right" market="de" />
+</div>
     )}
 
     <h1>{data?.title ?? "Unbenannter Beitrag"}</h1>
