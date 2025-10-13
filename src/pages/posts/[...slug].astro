@@ -5,7 +5,7 @@ import { getCollection } from "astro:content";
 
 import AmazonBox from "../../components/AmazonBox.astro";
 import AuthorBox from "../../components/AuthorBox.astro";
-import AmazonSearchBox from "../../components/AmazonSearchBox.astro";
+
 
 export async function getStaticPaths() {
   const posts = await getCollection("posts");
@@ -46,7 +46,7 @@ const data = post.data;
       <Content components={{ AmazonBox, AuthorBox }} />
     </article>
 
-    <AmazonSearchBox position="right" market="de" />
+
   </div>
 </Base>
 
