@@ -1,0 +1,108 @@
+---
+import CookieConsent from '../components/CookieConsent.astro';
+const { title = "TechZentrale", description = "Moderne Tech-Insights" } = Astro.props;
+
+const MATOMO_URL = import.meta.env.PUBLIC_MATOMO_URL || 'https://matomo.smartrichter.de/';
+const MATOMO_ID  = import.meta.env.PUBLIC_MATOMO_SITE_ID || '1';
+const isProd = import.meta.env.PROD;
+---
+
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <title>{title} | TechZentrale</title>
+    <!-- globale Styles -->
+
+    <link rel="stylesheet" href="/styles.css" />
+    <style>
+      :root{
+        --bg:#0b0c0f;--panel:#111318;--text:#e8eaf1;--muted:#a7adbd;
+        --primary:#7c9cff;--border:rgba(255,255,255,.12)
+      }
+
+      body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui}
+      a{color:inherit;text-decoration:none}
+      .container{max-width:1080px;margin:0 auto;padding:0 20px}
+      .header{border-bottom:1px solid var(--border);background:rgba(255,255,255,.02);backdrop-filter:saturate(180%) blur(6px)}
+      .nav{display:flex;align-items:center;justify-content:space-between;height:64px}
+      .brand{font-weight:800;letter-spacing:.2px}
+      .navlinks{display:flex;gap:16px}
+      .navlinks a{padding:8px 10px;border-radius:10px}
+      .navlinks a:hover{background:rgba(255,255,255,.06)}
+      main{padding:24px 0}
+      footer{border-top:1px solid var(--border);color:var(--muted);padding:24px 0;font-size:.95rem}
+    </style>
+
+    <!-- Matomo: loader wartet auf Consent (nur in Produktion aktiviert) -->
+    {isProd && MATOMO_URL && MATOMO_ID && (
+      <script is:inline>
+        (function() {
+          // Werte aus Astro einfügen
+          const MATOMO_URL = "{MATOMO_URL}";
+          const MATOMO_ID = "{MATOMO_ID}";
+
+          function loadMatomoIfAllowed() {
+            try {
+              const c = (window.cookieConsent && window.cookieConsent.get && window.cookieConsent.get()) || {};
+              if (c.analytics) {
+                // lade Matomo nur einmal
+                if (window._matomo_loaded) return;
+                window._matomo_loaded = true;
+
+                var _paq = window._paq = window._paq || [];
+                _paq.push(['setDoNotTrack', true]);
+                _paq.push(['enableLinkTracking']);
+                _paq.push(['trackPageView']);
+                _paq.push(['setTrackerUrl', MATOMO_URL + 'matomo.php']);
+                _paq.push(['setSiteId', MATOMO_ID]);
+
+                var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+                g.async=true; g.src=MATOMO_URL + 'matomo.js'; s.parentNode.insertBefore(g,s);
+              }
+            } catch(e) {
+              // still fail silently
+              console.warn('Matomo loader error', e);
+            }
+          }
+
+          // Reagiere auf Consent-Änderungen
+          window.addEventListener('cookie-consent-changed', loadMatomoIfAllowed, { passive: true });
+
+          // Versuche sofort (wenn Consent bereits gesetzt)
+          setTimeout(loadMatomoIfAllowed, 100);
+        })();
+      </script>
+    )}
+    <!-- End Matomo Loader -->
+
+  </head>
+  <body>
+  <header class="header">
+    <div class="container nav">
+      <a class="brand" href="/">TechZentrale</a>
+      <nav class="navlinks">
+        <a href="/">News</a>
+        <a href="/articles/">Artikel</a>
+        <a href="/impressum/">Impressum</a>
+      </nav>
+    </div>
+  </header>
+
+    <main class="container">
+      <slot />
+    </main>
+
+    <footer>
+      <div class="container">
+        © {new Date().getFullYear()} TechZentrale • <a href="/impressum/">Impressum</a> • <a href="/datenschutz/">Datenschutz</a>
+      </div>
+    </footer>
+
+    <!-- Cookie Banner (Komponente) -->
+    <CookieConsent />
+
+  </body>
+</html>
