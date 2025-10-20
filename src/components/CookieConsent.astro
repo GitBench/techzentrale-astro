@@ -1,0 +1,96 @@
+---
+// CookieConsent.astro
+const id = 'cookie-consent';
+---
+<style>
+#cookie-banner { position: fixed; left: 16px; right:16px; bottom:16px; z-index:9999; background:#0f1724; color:#fff; padding:16px; border-radius:10px; box-shadow:0 6px 24px rgba(2,6,23,.6); display:flex; gap:12px; align-items:center; }
+#cookie-banner p { margin:0; font-size:0.95rem; }
+.cookie-actions { margin-left:auto; display:flex; gap:8px; align-items:center; }
+.cookie-btn { background:#fff;color:#0b1220;padding:8px 12px;border-radius:8px;border:none;cursor:pointer;font-weight:600 }
+.cookie-link { color:#9bb0ff; text-decoration:underline; }
+.cookie-small { font-size:0.85rem; opacity:0.9; }
+</style>
+
+<div id={id} hidden>
+  <div id="cookie-banner" role="dialog" aria-live="polite" aria-label="Cookie Einstellungen">
+    <div>
+      <p><strong>Wir verwenden Cookies</strong></p>
+      <p class="cookie-small">Wir nutzen notwendige Cookies sowie (mit deiner Erlaubnis) Analytics und Partner-Cookies, um die Seite zu verbessern und dir passende Produkte zu zeigen.</p>
+    </div>
+
+    <div class="cookie-actions">
+      <button class="cookie-btn" data-action="accept-all">Alle akzeptieren</button>
+      <button class="cookie-btn" data-action="accept-essentials">Nur notwendige</button>
+      <button class="cookie-btn" id="manage" data-action="manage">Einstellungen</button>
+    </div>
+  </div>
+
+  <!-- optional modal für Details (einfacher) -->
+  <div id="cookie-modal" hidden aria-hidden="true"></div>
+</div>
+
+<script is:inline>
+(function(){
+  const KEY='site_cookie_consent_v1';
+  const banner = document.getElementById('cookie-consent');
+  if (!banner) return;
+  // read consent
+  try {
+    const raw = localStorage.getItem(KEY);
+    const parsed = raw ? JSON.parse(raw) : null;
+    if (parsed && parsed.date) {
+      // if user already made a choice -> apply it
+      applyConsent(parsed);
+      return;
+    }
+  } catch(e){/*ignore*/}
+  // show banner
+  banner.hidden = false;
+
+  function save(consent) {
+    consent.date = new Date().toISOString();
+    localStorage.setItem(KEY, JSON.stringify(consent));
+    applyConsent(consent);
+  }
+
+  function applyConsent(consent) {
+    banner.hidden = true;
+    // analytics
+    if (consent.analytics) {
+      window.__cookie_consent_analytics = true;
+      // dispatch event so Matomo loader can start
+      window.dispatchEvent(new Event('cookie-consent-changed'));
+    } else {
+      window.__cookie_consent_analytics = false;
+    }
+    // marketing (amazon links etc.)
+    if (consent.marketing) {
+      window.__cookie_consent_marketing = true;
+      window.dispatchEvent(new Event('cookie-consent-changed'));
+    } else {
+      window.__cookie_consent_marketing = false;
+    }
+  }
+
+  banner.addEventListener('click', (e) => {
+    const a = e.target.closest('[data-action]');
+    if (!a) return;
+    const act = a.getAttribute('data-action');
+    if (act === 'accept-all') save({ essentials: true, analytics: true, marketing: true });
+    else if (act === 'accept-essentials') save({ essentials: true, analytics: false, marketing: false });
+    else if (act === 'manage') {
+      // optional: open detail modal or redirect to /datenschutz
+      // quick toggles:
+      const picks = confirm('Analytics aktivieren? OK = ja, Abbrechen = nein');
+      save({ essentials: true, analytics: picks, marketing: false });
+    }
+  }, false);
+
+  // expose functions globally for "withdraw" or settings page
+  window.cookieConsent = {
+    get: function(){ try { return JSON.parse(localStorage.getItem(KEY)); } catch(e){return null} },
+    set: function(obj){ save(Object.assign({}, {essentials:true,analytics:false,marketing:false}, obj)); },
+    revoke: function(){ localStorage.removeItem(KEY); window.dispatchEvent(new Event('cookie-consent-changed')); location.reload(); }
+  };
+})();
+</script>
