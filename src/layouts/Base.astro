@@ -2,8 +2,11 @@
 import CookieConsent from '../components/CookieConsent.astro';
 const { title = "TechZentrale", description = "Moderne Tech-Insights" } = Astro.props;
 
-const MATOMO_URL = import.meta.env.PUBLIC_MATOMO_URL || 'https://matomo.smartrichter.de/';
-const MATOMO_ID  = import.meta.env.PUBLIC_MATOMO_SITE_ID || '1';
+// Environment
+const MATOMO_URL = (import.meta.env.PUBLIC_MATOMO_URL || '').replace(/\/+$/, '') || null;
+const MATOMO_ID  = import.meta.env.PUBLIC_MATOMO_SITE_ID || null;
+const GOOGLE_CONV_ID = import.meta.env.PUBLIC_GOOGLE_CONVERSION_ID || null;
+const GOOGLE_CONV_LABEL = import.meta.env.PUBLIC_GOOGLE_CONVERSION_LABEL || null;
 const isProd = import.meta.env.PROD;
 ---
 
@@ -14,8 +17,8 @@ const isProd = import.meta.env.PROD;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
     <title>{title} | TechZentrale</title>
-    <!-- globale Styles -->
 
+    <!-- globale Styles -->
     <link rel="stylesheet" href="/styles.css" />
     <style>
       :root{
@@ -28,68 +31,140 @@ const isProd = import.meta.env.PROD;
       .container{max-width:1080px;margin:0 auto;padding:0 20px}
       .header{border-bottom:1px solid var(--border);background:rgba(255,255,255,.02);backdrop-filter:saturate(180%) blur(6px)}
       .nav{display:flex;align-items:center;justify-content:space-between;height:64px}
-      .brand{font-weight:800;letter-spacing:.2px}
+      .brand{font-weight:800;letter-spacing:.2px;display:flex;align-items:center;gap:10px}
       .navlinks{display:flex;gap:16px}
       .navlinks a{padding:8px 10px;border-radius:10px}
       .navlinks a:hover{background:rgba(255,255,255,.06)}
       main{padding:24px 0}
       footer{border-top:1px solid var(--border);color:var(--muted);padding:24px 0;font-size:.95rem}
+      /* small helper for screenreader-only text */
+      .sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
     </style>
 
-    <!-- Matomo: loader wartet auf Consent (nur in Produktion aktiviert) -->
+    <!-- ========== Matomo loader (only after analytics consent) ========== -->
     {isProd && MATOMO_URL && MATOMO_ID && (
       <script is:inline>
         (function() {
-          // Werte aus Astro einfügen
           const MATOMO_URL = "{MATOMO_URL}";
           const MATOMO_ID = "{MATOMO_ID}";
 
-          function loadMatomoIfAllowed() {
+          function initPaq() {
+            window._paq = window._paq || [];
+            try { _paq.push(["setDocumentTitle", document.domain + "/" + document.title]); } catch(e){}
+            try { _paq.push(["setCookieDomain", "*.smartrichter.de"]); } catch(e){}
+            _paq.push(['enableLinkTracking']);
+            _paq.push(['trackPageView']);
+            _paq.push(['setTrackerUrl', MATOMO_URL + '/matomo.php']);
+            _paq.push(['setSiteId', MATOMO_ID]);
+            console.debug && console.debug('Matomo: _paq initialized');
+          }
+
+          function loadMatomo() {
             try {
-              const c = (window.cookieConsent && window.cookieConsent.get && window.cookieConsent.get()) || {};
-              if (c.analytics) {
-                // lade Matomo nur einmal
-                if (window._matomo_loaded) return;
-                window._matomo_loaded = true;
-
-                var _paq = window._paq = window._paq || [];
-                _paq.push(['setDoNotTrack', true]);
-                _paq.push(['enableLinkTracking']);
-                _paq.push(['trackPageView']);
-                _paq.push(['setTrackerUrl', MATOMO_URL + 'matomo.php']);
-                _paq.push(['setSiteId', MATOMO_ID]);
-
-                var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
-                g.async=true; g.src=MATOMO_URL + 'matomo.js'; s.parentNode.insertBefore(g,s);
-              }
-            } catch(e) {
-              // still fail silently
-              console.warn('Matomo loader error', e);
+              if (window._matomo_loaded) return;
+              window._matomo_loaded = true;
+              initPaq();
+              var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+              g.async=true; g.src=MATOMO_URL + '/matomo.js'; s.parentNode.insertBefore(g,s);
+              console.debug && console.debug('Matomo: script injected', MATOMO_URL);
+            } catch (e) {
+              console.warn('Matomo load failed', e);
             }
           }
 
-          // Reagiere auf Consent-Änderungen
-          window.addEventListener('cookie-consent-changed', loadMatomoIfAllowed, { passive: true });
+          function onConsentChange() {
+            try {
+              const c = (window.cookieConsent && window.cookieConsent.get && window.cookieConsent.get()) || {};
+              if (c.analytics) loadMatomo();
+            } catch(e){ console.warn('Matomo consent read failed', e); }
+          }
 
-          // Versuche sofort (wenn Consent bereits gesetzt)
-          setTimeout(loadMatomoIfAllowed, 100);
+          window.addEventListener('cookie-consent-changed', onConsentChange, { passive: true });
+          setTimeout(onConsentChange, 100);
         })();
       </script>
     )}
-    <!-- End Matomo Loader -->
 
+    <!-- ========== Google Ads Conversion loader (only after marketing consent) ========== -->
+    {isProd && GOOGLE_CONV_ID && GOOGLE_CONV_LABEL && (
+      <script is:inline>
+        (function() {
+          const CONV_ID = "{GOOGLE_CONV_ID}";
+          const CONV_LABEL = "{GOOGLE_CONV_LABEL}";
+
+          function loadGtag() {
+            try {
+              if (window._google_ads_loaded) return;
+              window._google_ads_loaded = true;
+
+              // inject gtag script
+              var s = document.createElement('script');
+              s.async = true;
+              s.src = 'https://www.googletagmanager.com/gtag/js?id=' + CONV_ID;
+              document.head.appendChild(s);
+
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){ dataLayer.push(arguments); }
+              window.gtag = gtag;
+
+              gtag('js', new Date());
+              gtag('config', CONV_ID);
+              console.debug && console.debug('Google Ads: gtag loaded');
+            } catch(e) { console.warn('Google Ads load failed', e); }
+          }
+
+          function sendConversion(params = {}) {
+            if (!window.gtag) {
+              (window._pendingGoogleConversions = window._pendingGoogleConversions || []).push(params);
+              return;
+            }
+            const sendTo = `${CONV_ID}/${CONV_LABEL}`;
+            const payload = Object.assign({}, params, { send_to: sendTo });
+            try { window.gtag('event', 'conversion', payload); } catch(e){ console.warn('gtag conversion failed', e); }
+          }
+
+          function flushPending() {
+            const q = window._pendingGoogleConversions || [];
+            for (const p of q) sendConversion(p);
+            window._pendingGoogleConversions = [];
+          }
+
+          function onConsentChange() {
+            try {
+              const c = (window.cookieConsent && window.cookieConsent.get && window.cookieConsent.get()) || {};
+              if (c.marketing) {
+                loadGtag();
+                setTimeout(flushPending, 800);
+              }
+            } catch(e){ console.warn('Google consent read failed', e); }
+          }
+
+          window.addEventListener('cookie-consent-changed', onConsentChange, { passive: true });
+          setTimeout(onConsentChange, 100);
+
+          // expose a small API
+          window.googleAds = { load: loadGtag, sendConversion: sendConversion };
+        })();
+      </script>
+    )}
+
+    <!-- End head -->
   </head>
+
   <body>
-  <header class="header">
-    <div class="container nav">
-      <a class="brand" href="/">TechZentrale</a>
-      <nav class="navlinks">
-        <a href="/">News</a>
-        <a href="/articles/">Artikel</a>
-        <a href="/impressum/">Impressum</a>
-      </nav>
-    </div>
-  </header>
+    <header class="header">
+      <div class="container nav">
+        <a class="brand" href="/" aria-label="TechZentrale">
+          <!-- Replace with <img src="/images/logo.png" alt="TechZentrale" style="height:36px"> if desired -->
+          <span>TechZentrale</span>
+        </a>
+        <nav class="navlinks">
+          <a href="/">News</a>
+          <a href="/articles/">Artikel</a>
+          <a href="/impressum/">Impressum</a>
+        </nav>
+      </div>
+    </header>
 
     <main class="container">
       <slot />
@@ -101,8 +176,65 @@ const isProd = import.meta.env.PROD;
       </div>
     </footer>
 
-    <!-- Cookie Banner (Komponente) -->
+    <!-- Cookie Banner (Component) -->
     <CookieConsent />
+
+    <!-- ========== Amazon links activator: enable data-amz-href links only after marketing consent ========== -->
+    <script is:inline>
+      (function(){
+        function activateAmazonLinks() {
+          document.querySelectorAll('a[data-amz-href]').forEach(a => {
+            const real = a.getAttribute('data-amz-href');
+            if (!real) return;
+            a.setAttribute('href', real);
+            if (!a.getAttribute('target')) a.setAttribute('target', '_blank');
+            a.setAttribute('rel', 'nofollow noopener noreferrer sponsored');
+            a.dataset.amzActivated = '1';
+          });
+        }
+        function deactivateAmazonLinks(keepAsCta = true) {
+          document.querySelectorAll('a[data-amz-href]').forEach(a => {
+            if (keepAsCta) {
+              a.setAttribute('href', '#');
+              a.removeAttribute('target');
+              a.removeAttribute('rel');
+              a.setAttribute('title', 'Affiliate-Link nur bei Zustimmung zu Marketing-Cookies');
+              a.dataset.amzActivated = '0';
+            } else {
+              a.removeAttribute('href');
+              a.dataset.amzActivated = '0';
+            }
+          });
+        }
+
+        function onConsentChange() {
+          try {
+            const c = (window.cookieConsent && window.cookieConsent.get && window.cookieConsent.get()) || {};
+            if (c.marketing) activateAmazonLinks();
+            else deactivateAmazonLinks(true);
+          } catch(e){ console.warn('amazon activation error', e); }
+        }
+
+        // quick UX: if user clicks a deactivated affiliate link -> prompt to enable marketing
+        document.addEventListener('click', function(e){
+          const a = e.target.closest && e.target.closest('a[data-amz-href]');
+          if (!a) return;
+          if (a.dataset.amzActivated === '1') return;
+          e.preventDefault();
+          if (confirm('Um den Affiliate-Link zu öffnen, müssen Marketing-Cookies akzeptiert werden. Jetzt erlauben?')) {
+            if (window.cookieConsent && window.cookieConsent.set) {
+              // set marketing consent
+              window.cookieConsent.set({ essentials: true, analytics: (window.__cookie_consent_analytics || false), marketing: true });
+            } else {
+              alert('Bitte aktiviere Marketing-Cookies in den Einstellungen.');
+            }
+          }
+        }, true);
+
+        window.addEventListener('cookie-consent-changed', onConsentChange, { passive: true });
+        setTimeout(onConsentChange, 100);
+      })();
+    </script>
 
   </body>
 </html>
