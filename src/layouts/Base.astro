@@ -244,5 +244,41 @@ const isProd = import.meta.env.PROD;
        setTimeout(onConsentChange, 100);
      })();
 </script>
+<!-- Matomo Fallback: nur temporär zum Testen -->
+<script is:inline>
+(function(){
+  try {
+    setTimeout(function(){
+      try {
+        // Beende, wenn matomo bereits geladen wurde
+        if (window._matomo_loaded || Array.from(document.scripts).some(s=>s.src && s.src.includes('matomo.js'))) {
+          console.debug && console.debug('Matomo fallback: already loaded');
+          return;
+        }
+
+        // Consent lesen (falls vorhanden)
+        var consent = null;
+        try { consent = (window.cookieConsent && window.cookieConsent.get && window.cookieConsent.get()) || JSON.parse(localStorage.getItem('site_cookie_consent_v1') || 'null'); } catch(e){ consent = null; }
+
+        if (consent && consent.analytics) {
+          console.warn('Matomo fallback: injecting matomo because analytics consent present');
+          window._paq = window._paq || [];
+          _paq.push(["setDocumentTitle", document.domain + "/" + document.title]);
+          _paq.push(['enableLinkTracking']);
+          _paq.push(['trackPageView']);
+          // PASSE HIER DEINE MATOMO URL / SITE-ID AN (falls andere Werte nötig)
+          _paq.push(['setTrackerUrl','https://matomo.smartrichter.de/matomo.php']);
+          _paq.push(['setSiteId','1']);
+          var s=document.createElement('script'); s.async=true;
+          s.src='https://matomo.smartrichter.de/matomo.js';
+          document.head.appendChild(s);
+        } else {
+          console.debug && console.debug('Matomo fallback: no analytics consent or consent missing');
+        }
+      } catch(e) { console.warn('Matomo fallback error', e); }
+    }, 300);
+  } catch(e){ console.warn('Matomo fallback outer error', e); }
+})();
+</script>
 </body>
 </html>
