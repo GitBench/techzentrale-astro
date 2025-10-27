@@ -1,96 +1,209 @@
 ---
-// CookieConsent.astro
-const id = 'cookie-consent';
+// src/components/CookieConsent.astro
+// Minimal, datenschutzfreundliches Cookie-Consent-Banner
+// - speichert unter localStorage key "site_cookie_consent_v1"
+// - stellt window.cookieConsent.get/set/revoke zur Verfügung
+// - feuert window.dispatchEvent(new Event('cookie-consent-changed')) nach Set
+// NOTE: Styles minimal; an dein Design anpassen
 ---
 <style>
-#cookie-banner { position: fixed; left: 16px; right:16px; bottom:16px; z-index:9999; background:#0f1724; color:#fff; padding:16px; border-radius:10px; box-shadow:0 6px 24px rgba(2,6,23,.6); display:flex; gap:12px; align-items:center; }
-#cookie-banner p { margin:0; font-size:0.95rem; }
-.cookie-actions { margin-left:auto; display:flex; gap:8px; align-items:center; }
-.cookie-btn { background:#fff;color:#0b1220;padding:8px 12px;border-radius:8px;border:none;cursor:pointer;font-weight:600 }
-.cookie-link { color:#9bb0ff; text-decoration:underline; }
-.cookie-small { font-size:0.85rem; opacity:0.9; }
+/* Banner */
+#cookie-banner-wrap { position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 99999; display:flex; justify-content:center; pointer-events:auto; }
+#cookie-banner { max-width:920px; width:100%; background:rgba(17,19,24,0.96); color:var(--text,#e8eaf1); padding:14px; border-radius:12px; box-shadow:0 10px 30px rgba(2,6,23,.6); display:flex; gap:12px; align-items:center; font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial; }
+#cookie-banner .text { flex:1; }
+#cookie-banner h4 { margin:0 0 6px 0; font-size:1rem; }
+#cookie-banner p { margin:0; opacity:.88; font-size:.95rem; color:var(--muted,#a7adbd) }
+.cookie-actions { display:flex; gap:8px; align-items:center }
+.cookie-btn { border:0; padding:8px 12px; border-radius:8px; cursor:pointer; font-weight:700 }
+.btn-accept { background:var(--primary,#7c9cff); color:#071029 }
+.btn-ess { background:transparent; color:var(--text,#e8eaf1); border:1px solid rgba(255,255,255,.06) }
+.btn-manage { background:transparent; color:var(--muted,#a7adbd); padding:8px }
+.cookie-small { font-size:.86rem; opacity:.9; color:var(--muted,#a7adbd) }
+
+/* Modal (simple) */
+#cookie-modal { position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:100000; }
+#cookie-modal .panel { background:#0b0c0f; border-radius:10px; padding:18px; width:min(780px,calc(100% - 40px)); box-shadow:0 14px 40px rgba(0,0,0,.6); color:var(--text);}
+.modal-row { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid rgba(255,255,255,.03) }
+.modal-row:last-child { border-bottom:0 }
+.switch { display:inline-flex; align-items:center; gap:8px }
+.switch input[type="checkbox"] { width:18px; height:18px }
+
+/* hide visually but keep for screenreader if needed */
+.sr-only{ position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0 }
 </style>
 
-<div id={id} hidden>
-  <div id="cookie-banner" role="dialog" aria-live="polite" aria-label="Cookie Einstellungen">
-    <div>
-      <p><strong>Wir verwenden Cookies</strong></p>
-      <p class="cookie-small">Wir nutzen notwendige Cookies sowie (mit deiner Erlaubnis) Analytics und Partner-Cookies, um die Seite zu verbessern und dir passende Produkte zu zeigen.</p>
+<div id="cookie-banner-wrap" aria-live="polite">
+  <div id="cookie-banner" role="dialog" aria-label="Cookie Einstellungen" hidden>
+    <div class="text">
+      <h4>Wir verwenden Cookies</h4>
+      <p class="cookie-small">Wir setzen notwendige Cookies. Mit deiner Zustimmung aktivieren wir Analytics & Marketing (z. B. Matomo oder Partnerlinks), um die Seite zu verbessern.</p>
     </div>
 
-    <div class="cookie-actions">
-      <button class="cookie-btn" data-action="accept-all">Alle akzeptieren</button>
-      <button class="cookie-btn" data-action="accept-essentials">Nur notwendige</button>
-      <button class="cookie-btn" id="manage" data-action="manage">Einstellungen</button>
+    <div class="cookie-actions" role="group" aria-label="Cookie Aktionen">
+      <button class="cookie-btn btn-accept" data-action="accept-all">Alle akzeptieren</button>
+      <button class="cookie-btn btn-ess" data-action="accept-essentials">Nur notwendige</button>
+      <button class="cookie-btn btn-manage" data-action="manage">Einstellungen</button>
     </div>
   </div>
+</div>
 
-  <!-- optional modal für Details (einfacher) -->
-  <div id="cookie-modal" hidden aria-hidden="true"></div>
+<!-- Modal -->
+<div id="cookie-modal" role="dialog" aria-hidden="true">
+  <div class="panel" role="document" aria-labelledby="cookie-modal-title">
+    <h3 id="cookie-modal-title">Cookie-Einstellungen</h3>
+    <p class="cookie-small" style="margin-top:6px">Wähle aus, welche Arten von Cookies du erlauben möchtest.</p>
+
+    <div style="margin-top:12px">
+      <div class="modal-row">
+        <div>
+          <strong>Essentiell</strong>
+          <div class="cookie-small">Unbedingt nötig für Grundfunktionen der Seite.</div>
+        </div>
+        <div class="switch"><input type="checkbox" id="c_ess" disabled checked /> <label for="c_ess" class="sr-only">Essentiell</label></div>
+      </div>
+
+      <div class="modal-row">
+        <div>
+          <strong>Analytics</strong>
+          <div class="cookie-small">Anonyme Besuchsdaten (z. B. Matomo). Benötigt Zustimmung.</div>
+        </div>
+        <div class="switch"><input type="checkbox" id="c_analytics" /></div>
+      </div>
+
+      <div class="modal-row">
+        <div>
+          <strong>Marketing</strong>
+          <div class="cookie-small">Partnerlinks / Affiliate-Funktionen und Werbung.</div>
+        </div>
+        <div class="switch"><input type="checkbox" id="c_marketing" /></div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+      <button class="cookie-btn btn-ess" id="modal-cancel">Abbrechen</button>
+      <button class="cookie-btn btn-accept" id="modal-save">Speichern</button>
+    </div>
+  </div>
 </div>
 
 <script is:inline>
-(function(){
-  const KEY='site_cookie_consent_v1';
-  const banner = document.getElementById('cookie-consent');
-  if (!banner) return;
-  // read consent
-  try {
-    const raw = localStorage.getItem(KEY);
-    const parsed = raw ? JSON.parse(raw) : null;
-    if (parsed && parsed.date) {
-      // if user already made a choice -> apply it
-      applyConsent(parsed);
-      return;
-    }
-  } catch(e){/*ignore*/}
-  // show banner
-  banner.hidden = false;
+(() => {
+  const KEY = 'site_cookie_consent_v1';
+  const bannerWrap = document.getElementById('cookie-banner-wrap');
+  const banner = document.getElementById('cookie-banner');
+  const modal = document.getElementById('cookie-modal');
+  const modalSave = document.getElementById('modal-save');
+  const modalCancel = document.getElementById('modal-cancel');
+  const cAnalytics = document.getElementById('c_analytics');
+  const cMarketing = document.getElementById('c_marketing');
 
-  function save(consent) {
-    consent.date = new Date().toISOString();
-    localStorage.setItem(KEY, JSON.stringify(consent));
-    applyConsent(consent);
+  // Helper: read stored preference
+  function readPref() {
+    try {
+      return JSON.parse(localStorage.getItem(KEY) || 'null');
+    } catch (e) { return null; }
   }
 
-  function applyConsent(consent) {
-    banner.hidden = true;
-    // analytics
-    if (consent.analytics) {
-      window.__cookie_consent_analytics = true;
-      // dispatch event so Matomo loader can start
+  // Helper: write and dispatch
+  function writePref(obj) {
+    try {
+      const now = new Date().toISOString();
+      const payload = Object.assign({ essentials: true, analytics: false, marketing: false, date: now }, obj || {});
+      localStorage.setItem(KEY, JSON.stringify(payload));
+      // expose global API
+      window.cookieConsent = window.cookieConsent || {};
+      window.cookieConsent.get = () => {
+        try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch(e){ return null; }
+      };
+      window.cookieConsent.set = (o) => { writePref(o); };
+      window.cookieConsent.revoke = () => { localStorage.removeItem(KEY); window.dispatchEvent(new Event('cookie-consent-changed')); };
+      // notify listeners
       window.dispatchEvent(new Event('cookie-consent-changed'));
+      return payload;
+    } catch (e) { console.warn('cookie write failed', e); return null; }
+  }
+
+  // Initialize global API if not present
+  window.cookieConsent = window.cookieConsent || {};
+  window.cookieConsent.get = window.cookieConsent.get || function(){ return readPref(); };
+  window.cookieConsent.set = window.cookieConsent.set || function(o){ return writePref(o); };
+  window.cookieConsent.revoke = window.cookieConsent.revoke || function(){ localStorage.removeItem(KEY); window.dispatchEvent(new Event('cookie-consent-changed')); };
+
+  // Show banner if no preferences yet (or if draft set)
+  function showBannerIfNeeded() {
+    const pref = readPref();
+    if (!pref) {
+      banner.hidden = false;
+      bannerWrap.style.display = 'flex';
     } else {
-      window.__cookie_consent_analytics = false;
-    }
-    // marketing (amazon links etc.)
-    if (consent.marketing) {
-      window.__cookie_consent_marketing = true;
-      window.dispatchEvent(new Event('cookie-consent-changed'));
-    } else {
-      window.__cookie_consent_marketing = false;
+      banner.hidden = true;
+      bannerWrap.style.display = 'none';
     }
   }
 
-  banner.addEventListener('click', (e) => {
-    const a = e.target.closest('[data-action]');
-    if (!a) return;
-    const act = a.getAttribute('data-action');
-    if (act === 'accept-all') save({ essentials: true, analytics: true, marketing: true });
-    else if (act === 'accept-essentials') save({ essentials: true, analytics: false, marketing: false });
-    else if (act === 'manage') {
-      // optional: open detail modal or redirect to /datenschutz
-      // quick toggles:
-      const picks = confirm('Analytics aktivieren? OK = ja, Abbrechen = nein');
-      save({ essentials: true, analytics: picks, marketing: false });
-    }
-  }, false);
+  // sync modal controls with stored pref
+  function syncModal() {
+    const pref = readPref() || { essentials:true, analytics:false, marketing:false };
+    cAnalytics.checked = !!pref.analytics;
+    cMarketing.checked = !!pref.marketing;
+  }
 
-  // expose functions globally for "withdraw" or settings page
-  window.cookieConsent = {
-    get: function(){ try { return JSON.parse(localStorage.getItem(KEY)); } catch(e){return null} },
-    set: function(obj){ save(Object.assign({}, {essentials:true,analytics:false,marketing:false}, obj)); },
-    revoke: function(){ localStorage.removeItem(KEY); window.dispatchEvent(new Event('cookie-consent-changed')); location.reload(); }
-  };
+  // button handlers
+  document.querySelectorAll('#cookie-banner [data-action]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const a = btn.getAttribute('data-action');
+      if (a === 'accept-all') {
+        writePref({ essentials:true, analytics:true, marketing:true });
+        banner.hidden = true; bannerWrap.style.display = 'none';
+      } else if (a === 'accept-essentials') {
+        writePref({ essentials:true, analytics:false, marketing:false });
+        banner.hidden = true; bannerWrap.style.display = 'none';
+      } else if (a === 'manage') {
+        syncModal();
+        modal.style.display = 'flex';
+        modal.setAttribute('aria-hidden','false');
+      }
+    });
+  });
+
+  modalCancel.addEventListener('click', () => {
+    modal.style.display = 'none';
+    modal.setAttribute('aria-hidden','true');
+  });
+
+  modalSave.addEventListener('click', () => {
+    const pick = { essentials:true, analytics: !!cAnalytics.checked, marketing: !!cMarketing.checked };
+    writePref(pick);
+    modal.style.display = 'none';
+    modal.setAttribute('aria-hidden','true');
+    banner.hidden = true; bannerWrap.style.display = 'none';
+  });
+
+  // on load, if consent exists, hide banner
+  showBannerIfNeeded();
+
+  // Also react to external set() calls
+  window.addEventListener('cookie-consent-changed', () => {
+    // ensure UI matches
+    showBannerIfNeeded();
+    syncModal();
+  }, { passive:true });
+
+  // expose helper for debug
+  window.cookieConsent = window.cookieConsent || {};
+  window.cookieConsent.get = window.cookieConsent.get || function(){ return readPref(); };
+  window.cookieConsent.set = window.cookieConsent.set || function(o){ return writePref(o); };
+  window.cookieConsent.revoke = window.cookieConsent.revoke || function(){ localStorage.removeItem(KEY); window.dispatchEvent(new Event('cookie-consent-changed')); };
+
+  // Accessibility: keyboard close modal ESC
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.style.display === 'flex') {
+      modal.style.display = 'none';
+      modal.setAttribute('aria-hidden','true');
+    }
+  });
+
+  // ensure initial window cookieConsent values populated
+  try { window.__cookie_consent_analytics = (readPref() || {}).analytics || false; } catch(e){}
 })();
 </script>
